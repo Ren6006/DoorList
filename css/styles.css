@@ -502,11 +502,11 @@ input, textarea { user-select: text; -webkit-user-select: text; }
     transparent 100%
   );
   mix-blend-mode: screen;
-  animation: gleam 2.5s ease-in-out infinite;
+  animation: gleam 3.5s ease-in-out infinite;
 }
 @keyframes gleam {
   0% { transform: rotate(28deg) translateX(-125%); }
-  40% { transform: rotate(28deg) translateX(210%); }
+  57% { transform: rotate(28deg) translateX(210%); }
   100% { transform: rotate(28deg) translateX(210%); }
 }
 .invite-fade {
