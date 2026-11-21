@@ -438,17 +438,24 @@ input, textarea { user-select: text; -webkit-user-select: text; }
 }
 .flipper {
   position: absolute; inset: 0;
-  transform-style: preserve-3d;
+  transform-style: preserve-3d; -webkit-transform-style: preserve-3d;
   transition: transform 0.62s cubic-bezier(.45, .05, .2, 1);
   border-radius: 26px;
 }
 .invite-card.is-qr .flipper { transform: rotateY(180deg); }
 .flip-face {
-  position: absolute; inset: 0; border-radius: 26px; overflow: hidden;
+  position: absolute; inset: 0; border-radius: 26px;
   backface-visibility: hidden; -webkit-backface-visibility: hidden;
+}
+.flip-face, .flip-face *, .flip-face *::before {
+  backface-visibility: hidden; -webkit-backface-visibility: hidden;
+}
+.flip-clip {
+  position: absolute; inset: 0; border-radius: 26px; overflow: hidden;
+  background: inherit;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
 }
-.flip-front { background: #2e2e33; }
+.flip-front { background: #2e2e33; transform: rotateY(0deg); }
 .flip-back { background: #3a3a40; transform: rotateY(180deg); pointer-events: none; }
 .invite-card.is-qr .flip-front { pointer-events: none; }
 .invite-card.is-qr .flip-back { pointer-events: auto; }

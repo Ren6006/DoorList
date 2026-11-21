@@ -791,19 +791,23 @@ function inviteHTML(id) {
     <article class="invite-card${face}" data-action="flip-ticket">
       <div class="flipper">
         <div class="flip-face flip-front">
+          <div class="flip-clip">
           <img class="invite-img" alt="" draggable="false" src="${event.flyer || ''}" data-photo="events.${esc(event.id)}.flyer">
           <div class="gleam"></div>
           <div class="invite-fade"></div>
           ${nameBlock(labelPath, label, subtitle)}
           <button class="send-invite" type="button" data-action="share-native" data-id="${esc(event.id)}">${icons.share(16)} ${send}</button>
           <button class="qr-fab" type="button" data-action="flip-ticket" aria-label="Show ticket">${icons.qr(16)}</button>
+          </div>
         </div>
         <div class="flip-face flip-back">
+          <div class="flip-clip">
           ${nameBlock(labelPath, label, subtitle)}
           <button class="qr-fab" type="button" data-action="flip-ticket" aria-label="Show invite">${icons.refresh(18)}</button>
           <div class="ticket-face">
             <canvas class="ticket-qr" data-who="${who}" aria-label="Live ticket"></canvas>
             <button class="ticket-portrait" type="button" ${who === 'me' ? 'data-photo="people.me.avatar"' : ''} aria-label="Photo on ticket"></button>
+          </div>
           </div>
         </div>
       </div>
