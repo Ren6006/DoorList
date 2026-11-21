@@ -453,7 +453,7 @@ input, textarea { user-select: text; -webkit-user-select: text; }
 .invite-card.is-qr .flip-front { pointer-events: none; }
 .invite-card.is-qr .flip-back { pointer-events: auto; }
 .ticket-face {
-  position: absolute; left: 12px; right: 12px; top: 78px; bottom: 14px;
+  position: absolute; left: 13px; right: 13px; top: 60px; bottom: 8px;
   display: flex; align-items: center; justify-content: center;
 }
 .ticket-qr {
