@@ -758,7 +758,14 @@ function inviteHTML(id) {
     <div class="invite-stage">
       <div class="carousel" id="carousel">
         ${card('people.me.name', person('me').name, 'Your invite', 'Send this Invite', 'me')}
-        ${card('plusOneName', state.plusOneName, 'Guest pass', 'Send this pass', 'plus')}
+        <article class="invite-card plus-card">
+          <canvas class="plus-qr" aria-hidden="true"></canvas>
+          <div class="plus-copy">
+            <b>Request +1 Invite</b>
+            <span>Hosts will be notified to review your request</span>
+          </div>
+          <button class="plus-orb" type="button" data-action="request-plus" data-id="${esc(event.id)}" aria-label="Request plus one">+</button>
+        </article>
       </div>
       <div class="dots"><span class="dot on"></span><span class="dot"></span></div>
     </div>
@@ -900,7 +907,7 @@ function flashBanner() {
 }
 
 function mountQR() {
-  const live = document.querySelector('.invite-card.is-qr .ticket-qr, #qr-img');
+  const live = document.querySelector('.invite-card.is-qr .ticket-qr, .plus-qr, #qr-img');
   if (!live) { stopQR(); return; }
   drawQR(true);
   if (!qrTimer) qrTimer = setInterval(() => drawQR(false), 200);
@@ -915,8 +922,9 @@ function stopQR() {
 function drawQR(force) {
   if (typeof qrcode !== 'function') return;
   const canvases = [...document.querySelectorAll('.invite-card.is-qr .ticket-qr')];
+  const ghosts = [...document.querySelectorAll('.plus-qr')];
   const img = document.getElementById('qr-img');
-  if (!canvases.length && !img) return;
+  if (!canvases.length && !ghosts.length && !img) return;
   const now = Date.now();
   const second = Math.floor(now / 1000);
   if (!force && second === lastQrSecond) return;
@@ -926,6 +934,7 @@ function drawQR(force) {
     const who = canvas.dataset.who || 'me';
     paintTicket(canvas, `doorlist:ticket:${eventId}:${who}:${second}`, who);
   });
+  ghosts.forEach((canvas) => paintGhost(canvas, `doorlist:plus:${eventId}:${second}`));
   if (img) {
     const qr = qrcode(0, 'M');
     qr.addData(`doorlist:user:${person('me').id}:${person('me').name}`);
@@ -971,6 +980,47 @@ function paintTicket(canvas, payload, who) {
   ctx.fillStyle = '#fff';
   ctx.fill();
   stampPortrait(ctx, cx, cy, hole * 0.86, who);
+}
+
+function paintGhost(canvas, payload) {
+  const qr = qrcode(0, 'H');
+  qr.addData(payload);
+  qr.make();
+  const count = qr.getModuleCount();
+  const quiet = 2;
+  const size = 720;
+  const cell = size / (count + quiet * 2);
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, size, size);
+  const origin = quiet * cell;
+  const ink = 'rgba(255,255,255,0.07)';
+  [[0, 0], [count - 7, 0], [0, count - 7]].forEach(([row, col]) => {
+    ghostFinder(ctx, origin + col * cell, origin + row * cell, cell);
+  });
+  ctx.fillStyle = ink;
+  for (let row = 0; row < count; row++) {
+    for (let col = 0; col < count; col++) {
+      if (!qr.isDark(row, col) || inFinder(row, col, count)) continue;
+      const x = origin + col * cell + cell / 2;
+      const y = origin + row * cell + cell / 2;
+      ctx.beginPath();
+      ctx.arc(x, y, cell * 0.32, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+}
+
+function ghostFinder(ctx, x, y, cell) {
+  const s = cell * 7;
+  ctx.strokeStyle = 'rgba(255,255,255,0.09)';
+  ctx.lineWidth = Math.max(2, cell * 0.7);
+  roundRect(ctx, x + cell * 0.45, y + cell * 0.45, s - cell * 0.9, s - cell * 0.9, cell * 1.2);
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,0.07)';
+  roundRect(ctx, x + cell * 2.2, y + cell * 2.2, s - cell * 4.4, s - cell * 4.4, cell * 0.55);
+  ctx.fill();
 }
 
 function inFinder(row, col, count) {
@@ -1082,6 +1132,7 @@ function doAction(el) {
   const id = el.dataset.id || null;
   if (action === 'go') go(el.dataset.name, id);
   else if (action === 'flip-ticket') { ticketFace = !ticketFace; applyTicketFace(); }
+  else if (action === 'request-plus') showToast('Hosts will be notified to review your request.');
   else if (action === 'show-ticket') {
     menu = null;
     ticketFace = true;
