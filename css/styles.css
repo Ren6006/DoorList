@@ -485,24 +485,29 @@ input, textarea { user-select: text; -webkit-user-select: text; }
 .gleam::before {
   content: "";
   position: absolute;
-  top: -100%;
-  bottom: -100%;
+  top: -70%;
+  bottom: -70%;
   left: 0;
-  width: 34%;
+  width: 86%;
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.03) 38%,
-    rgba(255, 255, 255, 0.22) 50%,
-    rgba(255, 255, 255, 0.03) 62%,
+    rgba(255, 255, 255, 0.03) 14%,
+    rgba(255, 255, 255, 0.10) 30%,
+    rgba(255, 255, 255, 0.22) 44%,
+    rgba(255, 255, 255, 0.30) 50%,
+    rgba(255, 255, 255, 0.22) 56%,
+    rgba(255, 255, 255, 0.10) 70%,
+    rgba(255, 255, 255, 0.03) 86%,
     transparent 100%
   );
-  animation: gleam 2.88s ease-in-out infinite;
+  mix-blend-mode: screen;
+  animation: gleam 2.5s ease-in-out infinite;
 }
 @keyframes gleam {
-  0% { transform: rotate(45deg) translateX(-190%); }
-  70% { transform: rotate(45deg) translateX(430%); }
-  100% { transform: rotate(45deg) translateX(430%); }
+  0% { transform: rotate(28deg) translateX(-125%); }
+  40% { transform: rotate(28deg) translateX(210%); }
+  100% { transform: rotate(28deg) translateX(210%); }
 }
 .invite-fade {
   position: absolute; inset: 0; z-index: 2; pointer-events: none;
@@ -613,5 +618,5 @@ input, textarea { user-select: text; -webkit-user-select: text; }
 :focus-visible { outline: 2px solid #7aafff; outline-offset: 2px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .gleam::before { animation: none; transform: rotate(45deg) translateX(40%); opacity: .45; }
+  .gleam::before { animation: none; transform: rotate(28deg) translateX(20%); opacity: .55; }
 }
