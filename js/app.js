@@ -1029,23 +1029,17 @@ function paintTicket(canvas, payload, who) {
   });
   const cx = size / 2;
   const cy = size / 2;
-  const hole = size * 0.155;
   for (let row = 0; row < count; row++) {
     for (let col = 0; col < count; col++) {
       if (!qr.isDark(row, col) || inFinder(row, col, count)) continue;
       const x = origin + col * cell + cell / 2;
       const y = origin + row * cell + cell / 2;
-      if ((x - cx) ** 2 + (y - cy) ** 2 < (hole + cell) ** 2) continue;
       ctx.beginPath();
       ctx.arc(x, y, cell * 0.38, 0, Math.PI * 2);
       ctx.fill();
     }
   }
-  ctx.beginPath();
-  ctx.arc(cx, cy, hole, 0, Math.PI * 2);
-  ctx.fillStyle = '#fff';
-  ctx.fill();
-  stampPortrait(ctx, cx, cy, hole * 0.86, who);
+  stampPortrait(ctx, cx, cy, size * 0.133, who);
 }
 
 function paintGhost(canvas, payload) {
