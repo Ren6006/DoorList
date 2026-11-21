@@ -748,12 +748,12 @@ function inviteHTML(id) {
       <div><b>Invite not transferable</b><span>This is a direct invite</span></div>
     </div>
     <div class="invite-top">
-      <button class="iconbtn frost" type="button" data-action="back" aria-label="Close">${icons.close()}</button>
+      <button class="iconbtn frost" type="button" data-action="back" aria-label="Close">${icons.close(28)}</button>
       <button class="event-pill" type="button" data-action="go" data-name="event" data-id="${esc(event.id)}">
         <span class="dotimg" style="background-image:${cssUrl(event.flyer)}"></span>
         <span>${esc(event.title)}</span>
       </button>
-      <button class="iconbtn frost" type="button" data-action="menu" data-menu="invite" data-id="${esc(event.id)}" aria-label="More">${icons.more()}</button>
+      <button class="iconbtn frost" type="button" data-action="menu" data-menu="invite" data-id="${esc(event.id)}" aria-label="More">${icons.more(28)}</button>
     </div>
     <div class="invite-stage">
       <div class="carousel" id="carousel">
@@ -995,7 +995,7 @@ function paintGhost(canvas, payload) {
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, size, size);
   const origin = quiet * cell;
-  const ink = 'rgba(255,255,255,0.07)';
+  const ink = 'rgba(255,255,255,0.34)';
   [[0, 0], [count - 7, 0], [0, count - 7]].forEach(([row, col]) => {
     ghostFinder(ctx, origin + col * cell, origin + row * cell, cell);
   });
@@ -1006,7 +1006,7 @@ function paintGhost(canvas, payload) {
       const x = origin + col * cell + cell / 2;
       const y = origin + row * cell + cell / 2;
       ctx.beginPath();
-      ctx.arc(x, y, cell * 0.32, 0, Math.PI * 2);
+      ctx.arc(x, y, cell * 0.44, 0, Math.PI * 2);
       ctx.fill();
     }
   }
@@ -1014,11 +1014,11 @@ function paintGhost(canvas, payload) {
 
 function ghostFinder(ctx, x, y, cell) {
   const s = cell * 7;
-  ctx.strokeStyle = 'rgba(255,255,255,0.09)';
-  ctx.lineWidth = Math.max(2, cell * 0.7);
-  roundRect(ctx, x + cell * 0.45, y + cell * 0.45, s - cell * 0.9, s - cell * 0.9, cell * 1.2);
+  ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+  ctx.lineWidth = Math.max(4, cell * 1.25);
+  roundRect(ctx, x + cell * 0.45, y + cell * 0.45, s - cell * 0.9, s - cell * 0.9, cell * 1.35);
   ctx.stroke();
-  ctx.fillStyle = 'rgba(255,255,255,0.07)';
+  ctx.fillStyle = 'rgba(255,255,255,0.34)';
   roundRect(ctx, x + cell * 2.2, y + cell * 2.2, s - cell * 4.4, s - cell * 4.4, cell * 0.55);
   ctx.fill();
 }

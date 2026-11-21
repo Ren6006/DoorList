@@ -402,19 +402,19 @@ input, textarea { user-select: text; -webkit-user-select: text; }
   padding-bottom: 0;
 }
 .invite-top {
-  display: grid; grid-template-columns: 64px 1fr 64px; gap: 12px; align-items: center;
+  display: grid; grid-template-columns: 80px 1fr 80px; gap: 12px; align-items: center;
   padding: calc(14px + env(safe-area-inset-top)) 16px 0;
   flex: 0 0 auto;
 }
-.invite-top .iconbtn { width: 64px; height: 64px; background: #1a1a1e; border: 1px solid rgba(255,255,255,0.06); }
+.invite-top .iconbtn { width: 80px; height: 80px; background: #1a1a1e; border: 1px solid rgba(255,255,255,0.08); }
 .event-pill {
-  min-width: 0; min-height: 64px; display: flex; align-items: center; gap: 10px;
+  min-width: 0; min-height: 80px; display: flex; align-items: center; gap: 12px;
   background: #1a1a1e; border: 1px solid rgba(255,255,255,0.06);
   border-radius: 999px; padding: 6px 16px 6px 6px;
-  color: #fff; font-weight: 750; font-size: 16px;
+  color: #fff; font-weight: 750; font-size: 18px;
 }
 .event-pill span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.event-pill .dotimg { width: 52px; height: 52px; border-radius: 50%; background: #333 center/cover no-repeat; flex: 0 0 auto; }
+.event-pill .dotimg { width: 64px; height: 64px; border-radius: 50%; background: #333 center/cover no-repeat; flex: 0 0 auto; }
 .invite-stage {
   flex: 1;
   display: flex;
@@ -457,7 +457,7 @@ input, textarea { user-select: text; -webkit-user-select: text; }
 .invite-card.is-qr .icon-flip { display: grid; }
 .plus-card {
   background: #121214;
-  border: 1.5px dashed rgba(255, 255, 255, 0.22);
+  border: 2.5px dashed rgba(255, 255, 255, 0.32);
   box-shadow: none;
 }
 .plus-qr {
