@@ -755,11 +755,13 @@ function inviteHTML(id) {
       </button>
       <button class="iconbtn frost" type="button" data-action="menu" data-menu="invite" data-id="${esc(event.id)}" aria-label="More">${icons.more()}</button>
     </div>
-    <div class="carousel" id="carousel">
-      ${card('people.me.name', person('me').name, 'Your invite', 'Send this Invite', 'me')}
-      ${card('plusOneName', state.plusOneName, 'Guest pass', 'Send this pass', 'plus')}
+    <div class="invite-stage">
+      <div class="carousel" id="carousel">
+        ${card('people.me.name', person('me').name, 'Your invite', 'Send this Invite', 'me')}
+        ${card('plusOneName', state.plusOneName, 'Guest pass', 'Send this pass', 'plus')}
+      </div>
+      <div class="dots"><span class="dot on"></span><span class="dot"></span></div>
     </div>
-    <div class="dots"><span class="dot on"></span><span class="dot"></span></div>
   `;
 }
 
