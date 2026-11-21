@@ -53,9 +53,21 @@ function route() {
   return { name, id: parts[1] || null };
 }
 
+const SHEET = new Set(['invite', 'ticket']);
+let navDir = null;
+
+function motionFor(from, to) {
+  if (SHEET.has(to) && !SHEET.has(from)) return 'up';
+  if (SHEET.has(from) && !SHEET.has(to)) return 'down';
+  if (from === to) return null;
+  if (['home', 'profile', 'activity'].includes(from) && ['home', 'profile', 'activity'].includes(to)) return 'fade';
+  return 'push';
+}
+
 function go(name, id) {
   menu = null;
   editor = null;
+  navDir = motionFor(route().name, name);
   if (name === 'invite') {
     inviteBanner = true;
     ticketFace = false;
@@ -72,8 +84,10 @@ function go(name, id) {
 }
 
 function back() {
-  if (location.hash && location.hash !== '#home') history.back();
-  else go('home');
+  if (location.hash && location.hash !== '#home') {
+    navDir = SHEET.has(route().name) ? 'down' : 'pop';
+    history.back();
+  } else go('home');
 }
 
 function load() {
@@ -262,10 +276,13 @@ function dateBadge(event) {
 function render() {
   const prev = document.querySelector('.screen');
   if (prev && prev.dataset.key) scrollMem[prev.dataset.key] = prev.scrollTop;
+  const dir = navDir;
+  navDir = null;
+  const ghost = dir ? takeGhost() : null;
   const r = route();
   const key = [r.name, r.id || '', activityTab, eventsTab, guestTab].join(':');
   const pad = padClass(r);
-  app.innerHTML = `
+  app.innerHTML = `<div class="page">
     ${r.name === 'event' ? eventBackdrop(r.id) : ''}
     <section class="screen ${pad}${r.name === 'event' ? ' clear' : ''}${r.name === 'invite' || r.name === 'ticket' || r.name === 'code' ? ' invite-screen' : ''}" data-key="${esc(key)}">
       ${viewHTML(r)}
@@ -275,10 +292,52 @@ function render() {
     ${edit ? editBar(r) : ''}
     ${menuHTML()}
     ${editorHTML()}
-  `;
+  </div>`;
+  const page = app.querySelector('.page');
+  if (ghost && page) playMotion(dir, ghost, page);
   const sc = document.querySelector('.screen');
   if (sc && scrollMem[key] != null) sc.scrollTop = scrollMem[key];
   afterRender(r);
+}
+
+function takeGhost() {
+  if (!app.firstElementChild) return null;
+  const ghost = document.createElement('div');
+  ghost.className = 'ghost-layer';
+  ghost.innerHTML = app.innerHTML;
+  const orig = app.querySelectorAll('canvas');
+  const copy = ghost.querySelectorAll('canvas');
+  orig.forEach((canvas, i) => {
+    const dest = copy[i];
+    if (!dest) return;
+    dest.width = canvas.width;
+    dest.height = canvas.height;
+    const ctx = dest.getContext('2d');
+    if (ctx) ctx.drawImage(canvas, 0, 0);
+  });
+  return ghost;
+}
+
+function playMotion(dir, ghost, page) {
+  const leave = dir === 'down' || dir === 'pop';
+  if (leave) {
+    ghost.classList.add(dir === 'down' ? 'leave-down' : 'leave-pop');
+    app.appendChild(ghost);
+  } else {
+    page.classList.add(dir === 'up' ? 'enter-up' : dir === 'fade' ? 'enter-fade' : 'enter-push');
+    app.insertBefore(ghost, page);
+  }
+  const node = leave ? ghost : page;
+  const finish = () => {
+    if (!ghost.isConnected && !page.classList.contains('play')) return;
+    ghost.remove();
+    page.classList.remove('enter-up', 'enter-push', 'enter-fade', 'play');
+  };
+  requestAnimationFrame(() => requestAnimationFrame(() => node.classList.add('play')));
+  node.addEventListener('transitionend', (event) => {
+    if (event.target === node) finish();
+  });
+  setTimeout(finish, 800);
 }
 
 const scrollMem = {};
@@ -723,24 +782,31 @@ function inviteHTML(id) {
   const event = eventById(id);
   if (!event) return missing('That invite is gone.');
   const face = ticketFace ? ' is-qr' : '';
-  const card = (labelPath, label, subtitle, send, who) => `
-    <article class="invite-card${face}">
-      <img class="invite-img face-photo" alt="" draggable="false" src="${event.flyer || ''}" data-photo="events.${esc(event.id)}.flyer">
-      <div class="gleam face-photo"></div>
-      <div class="invite-fade face-photo"></div>
-      <button class="send-invite face-photo" type="button" data-action="share-native" data-id="${esc(event.id)}">${icons.share(16)} ${send}</button>
-      <div class="ticket-face">
-        <canvas class="ticket-qr" data-who="${who}" aria-label="Live ticket"></canvas>
-        <button class="ticket-portrait" type="button" ${who === 'me' ? 'data-photo="people.me.avatar"' : ''} aria-label="Photo on ticket"></button>
-      </div>
+  const nameBlock = (labelPath, label, subtitle) => `
       <div class="invite-name">
         <b>${labelPath ? field(labelPath, label, 'Name on invite') : esc(label)}</b>
         <span>${subtitle}</span>
+      </div>`;
+  const card = (labelPath, label, subtitle, send, who) => `
+    <article class="invite-card${face}" data-action="flip-ticket">
+      <div class="flipper">
+        <div class="flip-face flip-front">
+          <img class="invite-img" alt="" draggable="false" src="${event.flyer || ''}" data-photo="events.${esc(event.id)}.flyer">
+          <div class="gleam"></div>
+          <div class="invite-fade"></div>
+          ${nameBlock(labelPath, label, subtitle)}
+          <button class="send-invite" type="button" data-action="share-native" data-id="${esc(event.id)}">${icons.share(16)} ${send}</button>
+          <button class="qr-fab" type="button" data-action="flip-ticket" aria-label="Show ticket">${icons.qr(16)}</button>
+        </div>
+        <div class="flip-face flip-back">
+          ${nameBlock(labelPath, label, subtitle)}
+          <button class="qr-fab" type="button" data-action="flip-ticket" aria-label="Show invite">${icons.refresh(18)}</button>
+          <div class="ticket-face">
+            <canvas class="ticket-qr" data-who="${who}" aria-label="Live ticket"></canvas>
+            <button class="ticket-portrait" type="button" ${who === 'me' ? 'data-photo="people.me.avatar"' : ''} aria-label="Photo on ticket"></button>
+          </div>
+        </div>
       </div>
-      <button class="qr-fab" type="button" data-action="flip-ticket" aria-label="${ticketFace ? 'Show invite' : 'Show ticket'}">
-        <span class="icon-qr">${icons.qr(16)}</span>
-        <span class="icon-flip">${icons.refresh(18)}</span>
-      </button>
     </article>`;
   return `
     <div class="banner${inviteBanner ? '' : ' hide'}" id="invite-banner">
@@ -748,12 +814,12 @@ function inviteHTML(id) {
       <div><b>Invite not transferable</b><span>This is a direct invite</span></div>
     </div>
     <div class="invite-top">
-      <button class="iconbtn frost" type="button" data-action="back" aria-label="Close">${icons.close(28)}</button>
+      <button class="iconbtn frost" type="button" data-action="back" aria-label="Close">${icons.close(18)}</button>
       <button class="event-pill" type="button" data-action="go" data-name="event" data-id="${esc(event.id)}">
         <span class="dotimg" style="background-image:${cssUrl(event.flyer)}"></span>
         <span>${esc(event.title)}</span>
       </button>
-      <button class="iconbtn frost" type="button" data-action="menu" data-menu="invite" data-id="${esc(event.id)}" aria-label="More">${icons.more(28)}</button>
+      <button class="iconbtn frost" type="button" data-action="menu" data-menu="invite" data-id="${esc(event.id)}" aria-label="More">${icons.more(18)}</button>
     </div>
     <div class="invite-stage">
       <div class="carousel" id="carousel">
@@ -1135,9 +1201,14 @@ function doAction(el) {
   else if (action === 'request-plus') showToast('Hosts will be notified to review your request.');
   else if (action === 'show-ticket') {
     menu = null;
-    ticketFace = true;
-    if (route().name === 'invite' || route().name === 'ticket') render();
-    else go('ticket', id);
+    const here = route().name === 'invite' || route().name === 'ticket';
+    if (here) {
+      document.querySelectorAll('.sheet, .backdrop').forEach((node) => node.remove());
+      if (!ticketFace) {
+        ticketFace = true;
+        applyTicketFace();
+      }
+    } else go('ticket', id);
   }
   else if (action === 'back') back();
   else if (action === 'toggle-edit') { edit = !edit; menu = null; render(); }
@@ -1462,6 +1533,7 @@ function bind() {
     else if (next.name === 'invite') ticketFace = false;
     menu = null;
     editor = null;
+    if (!navDir) navDir = SHEET.has(next.name) ? 'up' : 'pop';
     render();
   });
 }
