@@ -25,6 +25,7 @@ let viewQuery = '';
 let eventQuery = '';
 let pendingPath = null;
 let inviteBanner = false;
+let ticketFace = false;
 let bannerTimer = null;
 let toastTimer = null;
 let qrTimer = null;
@@ -55,7 +56,11 @@ function route() {
 function go(name, id) {
   menu = null;
   editor = null;
-  if (name === 'invite') inviteBanner = true;
+  if (name === 'invite') {
+    inviteBanner = true;
+    ticketFace = false;
+  }
+  if (name === 'ticket') ticketFace = true;
   const next = '#' + [name, id].filter((part) => part != null && part !== '').map(encodeURIComponent).join('/');
   if ((location.hash || '#home') === next || (next === '#home' && !location.hash)) {
     if (next === '#home' && !location.hash) render();
@@ -235,6 +240,7 @@ const icons = {
     ? `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="3.2"/><path d="M5 19.2c1.2-3 3.6-4.5 7-4.5s5.8 1.5 7 4.5"/></svg>`
     : ico('<circle cx="12" cy="8" r="3.2"/><path d="M5 19.2c1.2-3 3.6-4.5 7-4.5s5.8 1.5 7 4.5"/>', s),
   qr: (s = 18) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="8" height="8" rx="1.4"/><rect x="13" y="3" width="8" height="8" rx="1.4"/><rect x="3" y="13" width="8" height="8" rx="1.4"/><rect x="13" y="13" width="3.2" height="3.2" rx=".5"/><rect x="17.8" y="13" width="3.2" height="3.2" rx=".5"/><rect x="13" y="17.8" width="3.2" height="3.2" rx=".5"/><rect x="17.8" y="17.8" width="3.2" height="3.2" rx=".5"/></svg>`,
+  refresh: (s = 18) => ico('<path d="M21 12a9 9 0 0 1-15.2 6.5L3 16"/><path d="M3 21v-5h5"/><path d="M3 12a9 9 0 0 1 15.2-6.5L21 8"/><path d="M21 3v5h-5"/>', s),
   flame: (s = 24) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2s1.6 3.2.6 5.2C11.8 8.6 10 9.2 10 11c0 .8.4 1.4.4 1.4S9 11.8 9 10.2C7.2 11.6 6 13.6 6 16a6 6 0 0 0 12 0c0-4.8-6-8.2-6-14z"/></svg>`,
   pin: (s = 16) => ico('<path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.2"/>', s),
   clock: (s = 16) => ico('<circle cx="12" cy="12" r="8"/><path d="M12 8v5l3 2"/>', s),
@@ -298,9 +304,8 @@ function viewHTML(r) {
   if (r.name === 'events') return eventsHTML();
   if (r.name === 'search') return searchHTML();
   if (r.name === 'guests') return guestsHTML(r.id);
-  if (r.name === 'ticket') return ticketHTML(r.id, true);
+  if (r.name === 'ticket' || r.name === 'invite') return inviteHTML(r.id);
   if (r.name === 'code') return ticketHTML('me', false);
-  if (r.name === 'invite') return inviteHTML(r.id);
   if (r.name === 'create') return createHTML();
   if (r.name === 'people') return peopleHTML();
   if (r.name === 'person') return personHTML(r.id);
@@ -717,17 +722,25 @@ function ticketHTML(id, live) {
 function inviteHTML(id) {
   const event = eventById(id);
   if (!event) return missing('That invite is gone.');
-  const card = (labelPath, label, subtitle, send) => `
-    <article class="invite-card">
-      <img class="invite-img" alt="" draggable="false" src="${event.flyer || ''}" data-photo="events.${esc(event.id)}.flyer">
-      <div class="gleam"></div>
-      <div class="invite-fade"></div>
+  const face = ticketFace ? ' is-qr' : '';
+  const card = (labelPath, label, subtitle, send, who) => `
+    <article class="invite-card${face}">
+      <img class="invite-img face-photo" alt="" draggable="false" src="${event.flyer || ''}" data-photo="events.${esc(event.id)}.flyer">
+      <div class="gleam face-photo"></div>
+      <div class="invite-fade face-photo"></div>
+      <button class="send-invite face-photo" type="button" data-action="share-native" data-id="${esc(event.id)}">${icons.share(16)} ${send}</button>
+      <div class="ticket-face">
+        <canvas class="ticket-qr" data-who="${who}" aria-label="Live ticket"></canvas>
+        <button class="ticket-portrait" type="button" ${who === 'me' ? 'data-photo="people.me.avatar"' : ''} aria-label="Photo on ticket"></button>
+      </div>
       <div class="invite-name">
         <b>${labelPath ? field(labelPath, label, 'Name on invite') : esc(label)}</b>
         <span>${subtitle}</span>
       </div>
-      <button class="qr-fab" type="button" data-action="go" data-name="ticket" data-id="${esc(event.id)}" aria-label="Ticket code">${icons.qr(16)}</button>
-      <button class="send-invite" type="button" data-action="share-native" data-id="${esc(event.id)}">${icons.share(16)} ${send}</button>
+      <button class="qr-fab" type="button" data-action="flip-ticket" aria-label="${ticketFace ? 'Show invite' : 'Show ticket'}">
+        <span class="icon-qr">${icons.qr(16)}</span>
+        <span class="icon-flip">${icons.refresh(18)}</span>
+      </button>
     </article>`;
   return `
     <div class="banner${inviteBanner ? '' : ' hide'}" id="invite-banner">
@@ -743,8 +756,8 @@ function inviteHTML(id) {
       <button class="iconbtn frost" type="button" data-action="menu" data-menu="invite" data-id="${esc(event.id)}" aria-label="More">${icons.more()}</button>
     </div>
     <div class="carousel" id="carousel">
-      ${card('people.me.name', person('me').name, 'Your invite', 'Send this Invite')}
-      ${card('plusOneName', state.plusOneName, 'Guest pass', 'Send this pass')}
+      ${card('people.me.name', person('me').name, 'Your invite', 'Send this Invite', 'me')}
+      ${card('plusOneName', state.plusOneName, 'Guest pass', 'Send this pass', 'plus')}
     </div>
     <div class="dots"><span class="dot on"></span><span class="dot"></span></div>
   `;
@@ -838,7 +851,7 @@ function openMenu(kind, id) {
   } else if (kind === 'invite') {
     menu = { items: [
       { label: editLabel, action: 'toggle-edit' },
-      { label: 'Show ticket code', action: 'go', name: 'ticket', id },
+      { label: 'Show ticket', action: 'show-ticket', id },
       { label: 'Invite not transferable', action: 'show-banner' }
     ] };
   }
@@ -868,7 +881,7 @@ function afterRender(r) {
     }, { passive: true });
   }
   if (r.name === 'invite' && inviteBanner) flashBanner();
-  mountQR(r);
+  mountQR();
   const q = document.getElementById('q');
   if (q && r.name === 'search') q.focus();
 }
@@ -884,11 +897,11 @@ function flashBanner() {
   }, 2200);
 }
 
-function mountQR(r) {
-  const img = document.getElementById('qr-img');
-  if (!img) { stopQR(); return; }
-  drawQR(r, true);
-  if (!qrTimer) qrTimer = setInterval(() => drawQR(route(), false), 50);
+function mountQR() {
+  const live = document.querySelector('.invite-card.is-qr .ticket-qr, #qr-img');
+  if (!live) { stopQR(); return; }
+  drawQR(true);
+  if (!qrTimer) qrTimer = setInterval(() => drawQR(false), 200);
 }
 
 function stopQR() {
@@ -897,25 +910,148 @@ function stopQR() {
   lastQrSecond = null;
 }
 
-function drawQR(r, force) {
+function drawQR(force) {
+  if (typeof qrcode !== 'function') return;
+  const canvases = [...document.querySelectorAll('.invite-card.is-qr .ticket-qr')];
   const img = document.getElementById('qr-img');
-  if (!img || typeof qrcode !== 'function') return;
-  const live = r.name === 'ticket';
+  if (!canvases.length && !img) return;
   const now = Date.now();
   const second = Math.floor(now / 1000);
-  const ring = document.getElementById('qr-ring');
-  if (ring) ring.style.setProperty('--p', live ? (now % 1000) / 1000 : 1);
   if (!force && second === lastQrSecond) return;
   lastQrSecond = second;
-  const payload = live
-    ? `doorlist:ticket:${r.id}:${person('me').id}:${second}`
-    : `doorlist:user:${person('me').id}:${person('me').name}`;
-  const qr = qrcode(0, 'M');
+  const eventId = route().id || 'me';
+  canvases.forEach((canvas) => {
+    const who = canvas.dataset.who || 'me';
+    paintTicket(canvas, `doorlist:ticket:${eventId}:${who}:${second}`, who);
+  });
+  if (img) {
+    const qr = qrcode(0, 'M');
+    qr.addData(`doorlist:user:${person('me').id}:${person('me').name}`);
+    qr.make();
+    img.src = qr.createDataURL(6, 2);
+  }
+}
+
+function paintTicket(canvas, payload, who) {
+  const qr = qrcode(0, 'H');
   qr.addData(payload);
   qr.make();
-  img.src = qr.createDataURL(6, 2);
-  const clock = document.getElementById('qr-clock');
-  if (clock) clock.textContent = new Date(second * 1000).toLocaleTimeString();
+  const count = qr.getModuleCount();
+  const quiet = 2;
+  const size = 720;
+  const cell = size / (count + quiet * 2);
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, size, size);
+  const origin = quiet * cell;
+  ctx.fillStyle = '#111';
+  [[0, 0], [count - 7, 0], [0, count - 7]].forEach(([row, col]) => {
+    finder(ctx, origin + col * cell, origin + row * cell, cell);
+  });
+  const cx = size / 2;
+  const cy = size / 2;
+  const hole = size * 0.155;
+  for (let row = 0; row < count; row++) {
+    for (let col = 0; col < count; col++) {
+      if (!qr.isDark(row, col) || inFinder(row, col, count)) continue;
+      const x = origin + col * cell + cell / 2;
+      const y = origin + row * cell + cell / 2;
+      if ((x - cx) ** 2 + (y - cy) ** 2 < (hole + cell) ** 2) continue;
+      ctx.beginPath();
+      ctx.arc(x, y, cell * 0.38, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.beginPath();
+  ctx.arc(cx, cy, hole, 0, Math.PI * 2);
+  ctx.fillStyle = '#fff';
+  ctx.fill();
+  stampPortrait(ctx, cx, cy, hole * 0.86, who);
+}
+
+function inFinder(row, col, count) {
+  return (row < 7 && col < 7) || (row < 7 && col >= count - 7) || (row >= count - 7 && col < 7);
+}
+
+function finder(ctx, x, y, cell) {
+  const s = cell * 7;
+  ctx.fillStyle = '#111';
+  roundRect(ctx, x, y, s, s, cell * 0.9);
+  ctx.fill();
+  ctx.fillStyle = '#fff';
+  roundRect(ctx, x + cell, y + cell, s - cell * 2, s - cell * 2, cell * 0.45);
+  ctx.fill();
+  ctx.fillStyle = '#111';
+  roundRect(ctx, x + cell * 2, y + cell * 2, s - cell * 4, s - cell * 4, cell * 0.4);
+  ctx.fill();
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  const radius = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.arcTo(x + w, y, x + w, y + h, radius);
+  ctx.arcTo(x + w, y + h, x, y + h, radius);
+  ctx.arcTo(x, y + h, x, y, radius);
+  ctx.arcTo(x, y, x + w, y, radius);
+  ctx.closePath();
+}
+
+const portraits = {};
+
+function stampPortrait(ctx, cx, cy, radius, who) {
+  const me = who === 'me';
+  const p = me ? person('me') : { name: state.plusOneName || 'Guest', avatar: '', color: '#6d28d9' };
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+  ctx.clip();
+  ctx.fillStyle = p.color || '#6d28d9';
+  ctx.fillRect(cx - radius, cy - radius, radius * 2, radius * 2);
+  ctx.fillStyle = '#fff';
+  ctx.font = `800 ${Math.round(radius * 0.7)}px -apple-system, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(initials(p.name), cx, cy + radius * 0.04);
+  ctx.restore();
+  const url = p.avatar || '';
+  if (!url) return;
+  const cached = portraits[url];
+  if (cached) {
+    drawCover(ctx, cached, cx, cy, radius);
+    return;
+  }
+  const img = new Image();
+  img.onload = () => {
+    portraits[url] = img;
+    if (document.querySelector('.invite-card.is-qr')) drawQR(true);
+  };
+  img.src = url;
+}
+
+function drawCover(ctx, img, cx, cy, radius) {
+  const side = radius * 2;
+  const scale = Math.max(side / img.width, side / img.height);
+  const w = img.width * scale;
+  const h = img.height * scale;
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+  ctx.clip();
+  ctx.drawImage(img, cx - w / 2, cy - h / 2, w, h);
+  ctx.restore();
+}
+
+function applyTicketFace() {
+  document.querySelectorAll('.invite-card').forEach((card) => card.classList.toggle('is-qr', ticketFace));
+  document.querySelectorAll('.qr-fab').forEach((button) => {
+    button.setAttribute('aria-label', ticketFace ? 'Show invite' : 'Show ticket');
+  });
+  lastQrSecond = null;
+  if (ticketFace) mountQR();
+  else stopQR();
 }
 
 function onClick(event) {
@@ -943,6 +1079,13 @@ function doAction(el) {
   const action = el.dataset.action;
   const id = el.dataset.id || null;
   if (action === 'go') go(el.dataset.name, id);
+  else if (action === 'flip-ticket') { ticketFace = !ticketFace; applyTicketFace(); }
+  else if (action === 'show-ticket') {
+    menu = null;
+    ticketFace = true;
+    if (route().name === 'invite' || route().name === 'ticket') render();
+    else go('ticket', id);
+  }
   else if (action === 'back') back();
   else if (action === 'toggle-edit') { edit = !edit; menu = null; render(); }
   else if (action === 'menu') openMenu(el.dataset.menu, id);
@@ -1261,6 +1404,9 @@ function bind() {
     }
   });
   window.addEventListener('hashchange', () => {
+    const next = route();
+    if (next.name === 'ticket') ticketFace = true;
+    else if (next.name === 'invite') ticketFace = false;
     menu = null;
     editor = null;
     render();
@@ -1528,6 +1674,7 @@ function seed() {
   };
 }
 
+if (route().name === 'ticket') ticketFace = true;
 bind();
 render();
 if (canStore && !localStorage.getItem(TIP)) {

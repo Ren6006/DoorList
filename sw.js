@@ -1,9 +1,9 @@
-const CACHE = 'doorlist-v5';
+const CACHE = 'doorlist-v7';
 const ASSETS = [
   './',
   './index.html',
-  './css/styles.css?v=5',
-  './js/app.js?v=5',
+  './css/styles.css?v=7',
+  './js/app.js?v=7',
   './js/qrcode.js',
   './manifest.webmanifest',
   './icons/icon-192.png',
